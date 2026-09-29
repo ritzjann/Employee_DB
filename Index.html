@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Employee Management</title>
+
+    <style>
+
+        :root {
+            --bg: #f3f5f8;
+            --card: #ffffff;
+            --text: #1e2a3a;
+            --muted: #6b7788;
+            --line: #dde3ea;
+            --accent: #1f6f78;
+            --accent-dark: #17555c;
+            --ok-bg: #e3f4ea;
+            --ok-text: #1b6b3a;
+            --err-bg: #fbe6e6;
+            --err-text: #a12626;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px 16px;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 28px;
+        }
+
+        h2 {
+            margin: 0 0 16px;
+            font-size: 18px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* ---------- Form ---------- */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 0;
+            border-color: var(--accent);
+        }
+
+        /* ---------- Buttons ---------- */
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+            cursor: pointer;
+            background: var(--accent);
+            color: #fff;
+        }
+
+        button:hover {
+            background: var(--accent-dark);
+        }
+
+        button:focus-visible {
+            outline: 2px solid var(--accent-dark);
+            outline-offset: 2px;
+        }
+
+        button.secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        button.secondary:hover {
+            background: #e6f1f2;
+        }
+
+        .actions {
+            margin-top: 18px;
+        }
+
+        /* ---------- Message ---------- */
+
+        .message {
+            display: none;
+            margin-top: 16px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .message.ok {
+            display: block;
+            background: var(--ok-bg);
+            color: var(--ok-text);
+        }
+
+        .message.error {
+            display: block;
+            background: var(--err-bg);
+            color: var(--err-text);
+        }
+
+        /* ---------- Table ---------- */
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .list-header h2 {
+            margin: 0;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+        }
+
+        th {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 600;
+            background: #f8fafb;
+        }
+
+        td.number,
+        th.number {
+            text-align: right;
+        }
+
+        tbody tr:hover {
+            background: #f8fafb;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 28px 12px;
+        }
+
+        @media (max-width: 560px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <h1>Employee Management</h1>
+
+
+        <!-- ================================ -->
+        <!-- INSERT -->
+        <!-- ================================ -->
+
+        <div class="card">
+
+            <h2>Add employee</h2>
+
+            <div class="form-grid">
+
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" id="name" placeholder="Juan Dela Cruz">
+                </div>
+
+                <div>
+                    <label for="position">Position</label>
+                    <input type="text" id="position" placeholder="Accountant">
+                </div>
+
+                <div>
+                    <label for="department">Department</label>
+                    <input type="text" id="department" placeholder="Finance">
+                </div>
+
+                <div>
+                    <label for="salary">Salary</label>
+                    <input type="number" id="salary" placeholder="25000" step="0.01" min="0">
+                </div>
+
+            </div>
+
+            <div class="actions">
+                <button onclick="addEmployee()">Add employee</button>
+            </div>
+
+            <div id="message" class="message"></div>
+
+        </div>
+
+
+        <!-- ================================ -->
+        <!-- RETRIEVE -->
+        <!-- ================================ -->
+
+        <div class="card">
+
+            <div class="list-header">
+                <h2>Employees</h2>
+                <button class="secondary" onclick="loadEmployees()">Refresh list</button>
+            </div>
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Department</th>
+                            <th class="number">Salary</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="employeeTable"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // Escape text so user input can't inject HTML
+        function escapeHtml(value) {
+            const div = document.createElement("div");
+            div.textContent = value;
+            return div.innerHTML;
+        }
+
+
+        // Show a success or error message under the form
+        function showMessage(text, type) {
+            const box = document.getElementById("message");
+            box.textContent = text;
+            box.className = "message " + type;
+        }
+
+
+        // ========================================
+        // GET - Retrieve Employees
+        // ========================================
+
+        async function loadEmployees() {
+
+            const table = document.getElementById("employeeTable");
+
+            try {
+
+                const response = await fetch("/api/employees");
+
+                if (!response.ok) throw new Error();
+
+                const employees = await response.json();
+
+                if (employees.length === 0) {
+                    table.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="empty">
+                                No employees yet. Add the first one above.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                table.innerHTML = employees.map(employee => `
+                    <tr>
+                        <td>${employee.id}</td>
+                        <td>${escapeHtml(employee.name)}</td>
+                        <td>${escapeHtml(employee.position)}</td>
+                        <td>${escapeHtml(employee.department)}</td>
+                        <td class="number">${Number(employee.salary).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                `).join("");
+
+            } catch (error) {
+
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty">
+                            Could not load employees. Check that the server and database are running.
+                        </td>
+                    </tr>
+                `;
+
+            }
+
+        }
+
+
+        // ========================================
+        // POST - Insert Employee
+        // ========================================
+
+        async function addEmployee() {
+
+            const employee = {
+                name: document.getElementById("name").value.trim(),
+                position: document.getElementById("position").value.trim(),
+                department: document.getElementById("department").value.trim(),
+                salary: document.getElementById("salary").value
+            };
+
+            try {
+
+                const response = await fetch("/api/employees", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(employee)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    showMessage(result.message, "error");
+                    return;
+                }
+
+                showMessage(result.message, "ok");
+
+                // Clear inputs
+                ["name", "position", "department", "salary"].forEach(id => {
+                    document.getElementById(id).value = "";
+                });
+
+                // Refresh list
+                loadEmployees();
+
+            } catch (error) {
+
+                showMessage("Could not reach the server.", "error");
+
+            }
+
+        }
+
+
+        // Load employees when page opens
+        loadEmployees();
+
+    </script>
+
+</body>
+
+</html>
