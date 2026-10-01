@@ -4,24 +4,14 @@ const mysql = require("mysql2");
 const app = express();
 const PORT = 3000;
 
-/*
 
-npm init -y
-npm install express mysql2
-
-Then run schema.sql in MySQL to create the database and table.
-
-*/
-
-// Allow JSON data
 app.use(express.json());
 
 
-// Serve index.html
 app.use(express.static(__dirname));
 
 
-// Connect to MySQL
+
 const db = mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -30,7 +20,6 @@ const db = mysql.createConnection({
 });
 
 
-// Test database connection
 db.connect((err) => {
 
     if (err) {
@@ -43,9 +32,7 @@ db.connect((err) => {
 });
 
 
-// ========================================
-// GET - Retrieve Employees (READ)
-// ========================================
+
 
 app.get("/api/employees", (req, res) => {
 
@@ -67,9 +54,6 @@ app.get("/api/employees", (req, res) => {
 });
 
 
-// ========================================
-// POST - Insert Employee (CREATE)
-// ========================================
 
 app.post("/api/employees", (req, res) => {
 
@@ -79,7 +63,6 @@ app.post("/api/employees", (req, res) => {
     const salary = req.body.salary;
 
 
-    // Basic validation
     if (!name || !position || !department || salary === "" || salary == null) {
         return res.status(400).json({
             message: "All fields are required"
@@ -118,9 +101,95 @@ app.post("/api/employees", (req, res) => {
 });
 
 
-// ========================================
-// Start Server
-// ========================================
+
+
+app.put("/api/employees/:id", (req, res) => {
+
+    const id = req.params.id;
+    const name = req.body.name;
+    const position = req.body.position;
+    const department = req.body.department;
+    const salary = req.body.salary;
+
+    if (!name || !position || !department || salary === "" || salary == null) {
+        return res.status(400).json({
+            message: "All fields are required"
+        });
+    }
+
+
+    const sql = `
+        UPDATE employees
+        SET name = ?, position = ?, department = ?, salary = ?
+        WHERE id = ?
+    `;
+
+
+    db.query(
+        sql,
+        [name, position, department, salary, id],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json({
+                    message: "Database error"
+                });
+            }
+
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    message: "Employee not found"
+                });
+            }
+
+
+            res.json({
+                message: "Employee updated successfully"
+            });
+
+        }
+    );
+
+});
+
+
+
+
+app.delete("/api/employees/:id", (req, res) => {
+
+    const id = req.params.id;
+
+    const sql = "DELETE FROM employees WHERE id = ?";
+
+    db.query(sql, [id], (err, result) => {
+
+        if (err) {
+            console.error(err);
+            return res.status(500).json({
+                message: "Database error"
+            });
+        }
+
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                message: "Employee not found"
+            });
+        }
+
+
+        res.json({
+            message: "Employee deleted successfully"
+        });
+
+    });
+
+});
+
+
+
 
 app.listen(PORT, () => {
 
