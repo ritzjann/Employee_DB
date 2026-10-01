@@ -59,7 +59,7 @@
             margin-bottom: 24px;
         }
 
-        /* ---------- Form ---------- */
+       
 
         .form-grid {
             display: grid;
@@ -89,7 +89,7 @@
             border-color: var(--accent);
         }
 
-        /* ---------- Buttons ---------- */
+  
 
         button {
             padding: 10px 18px;
@@ -121,11 +121,32 @@
             background: #e6f1f2;
         }
 
-        .actions {
-            margin-top: 18px;
+        button.danger {
+            background: #b83232;
         }
 
-        /* ---------- Message ---------- */
+        button.danger:hover {
+            background: #8f2525;
+        }
+
+        button.small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+        }
+
+
 
         .message {
             display: none;
@@ -147,7 +168,7 @@
             color: var(--err-text);
         }
 
-        /* ---------- Table ---------- */
+    
 
         .list-header {
             display: flex;
@@ -216,13 +237,12 @@
         <h1>Employee Management</h1>
 
 
-        <!-- ================================ -->
-        <!-- INSERT -->
-        <!-- ================================ -->
-
+   
         <div class="card">
 
-            <h2>Add employee</h2>
+            <h2 id="formTitle">Add employee</h2>
+
+            <input type="hidden" id="employeeId">
 
             <div class="form-grid">
 
@@ -249,7 +269,8 @@
             </div>
 
             <div class="actions">
-                <button onclick="addEmployee()">Add employee</button>
+                <button id="submitBtn" onclick="addEmployee()">Add employee</button>
+                <button id="cancelBtn" class="secondary" onclick="cancelEdit()" style="display:none">Cancel</button>
             </div>
 
             <div id="message" class="message"></div>
@@ -257,9 +278,7 @@
         </div>
 
 
-        <!-- ================================ -->
-        <!-- RETRIEVE -->
-        <!-- ================================ -->
+   
 
         <div class="card">
 
@@ -279,6 +298,7 @@
                             <th>Position</th>
                             <th>Department</th>
                             <th class="number">Salary</th>
+                            <th class="number">Actions</th>
                         </tr>
                     </thead>
 
@@ -295,7 +315,7 @@
 
     <script>
 
-        // Escape text so user input can't inject HTML
+       
         function escapeHtml(value) {
             const div = document.createElement("div");
             div.textContent = value;
@@ -303,17 +323,16 @@
         }
 
 
-        // Show a success or error message under the form
+     
+        let loadedEmployees = [];
+
+
         function showMessage(text, type) {
             const box = document.getElementById("message");
             box.textContent = text;
             box.className = "message " + type;
         }
 
-
-        // ========================================
-        // GET - Retrieve Employees
-        // ========================================
 
         async function loadEmployees() {
 
@@ -326,11 +345,12 @@
                 if (!response.ok) throw new Error();
 
                 const employees = await response.json();
+                loadedEmployees = employees;
 
                 if (employees.length === 0) {
                     table.innerHTML = `
                         <tr>
-                            <td colspan="5" class="empty">
+                            <td colspan="6" class="empty">
                                 No employees yet. Add the first one above.
                             </td>
                         </tr>
@@ -345,6 +365,12 @@
                         <td>${escapeHtml(employee.position)}</td>
                         <td>${escapeHtml(employee.department)}</td>
                         <td class="number">${Number(employee.salary).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="number">
+                            <div class="row-actions">
+                                <button class="secondary small" onclick="editEmployee(${employee.id})">Edit</button>
+                                <button class="danger small" onclick="deleteEmployee(${employee.id})">Delete</button>
+                            </div>
+                        </td>
                     </tr>
                 `).join("");
 
@@ -352,7 +378,7 @@
 
                 table.innerHTML = `
                     <tr>
-                        <td colspan="5" class="empty">
+                        <td colspan="6" class="empty">
                             Could not load employees. Check that the server and database are running.
                         </td>
                     </tr>
@@ -363,10 +389,7 @@
         }
 
 
-        // ========================================
-        // POST - Insert Employee
-        // ========================================
-
+  
         async function addEmployee() {
 
             const employee = {
@@ -376,10 +399,12 @@
                 salary: document.getElementById("salary").value
             };
 
+            const editId = document.getElementById("employeeId").value;
+
             try {
 
-                const response = await fetch("/api/employees", {
-                    method: "POST",
+                const response = await fetch(editId ? "/api/employees/" + editId : "/api/employees", {
+                    method: editId ? "PUT" : "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -395,12 +420,8 @@
 
                 showMessage(result.message, "ok");
 
-                // Clear inputs
-                ["name", "position", "department", "salary"].forEach(id => {
-                    document.getElementById(id).value = "";
-                });
+                cancelEdit();
 
-                // Refresh list
                 loadEmployees();
 
             } catch (error) {
@@ -412,7 +433,72 @@
         }
 
 
-        // Load employees when page opens
+   
+        function editEmployee(id) {
+
+            const employee = loadedEmployees.find(e => e.id === id);
+            if (!employee) return;
+
+            document.getElementById("employeeId").value = employee.id;
+            document.getElementById("name").value = employee.name;
+            document.getElementById("position").value = employee.position;
+            document.getElementById("department").value = employee.department;
+            document.getElementById("salary").value = employee.salary;
+
+            document.getElementById("formTitle").textContent = "Edit employee #" + employee.id;
+            document.getElementById("submitBtn").textContent = "Save changes";
+            document.getElementById("cancelBtn").style.display = "";
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+
+        }
+
+
+        function cancelEdit() {
+
+            ["employeeId", "name", "position", "department", "salary"].forEach(id => {
+                document.getElementById(id).value = "";
+            });
+
+            document.getElementById("formTitle").textContent = "Add employee";
+            document.getElementById("submitBtn").textContent = "Add employee";
+            document.getElementById("cancelBtn").style.display = "none";
+
+        }
+
+
+        async function deleteEmployee(id) {
+
+            if (!confirm("Delete this employee? This cannot be undone.")) return;
+
+            try {
+
+                const response = await fetch("/api/employees/" + id, {
+                    method: "DELETE"
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    showMessage(result.message, "error");
+                    return;
+                }
+
+                if (document.getElementById("employeeId").value == id) cancelEdit();
+
+                showMessage(result.message, "ok");
+                loadEmployees();
+
+            } catch (error) {
+
+                showMessage("Could not reach the server.", "error");
+
+            }
+
+        }
+
+
+    
         loadEmployees();
 
     </script>
